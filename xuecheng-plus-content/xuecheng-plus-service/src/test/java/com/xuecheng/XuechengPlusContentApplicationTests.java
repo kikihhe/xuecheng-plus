@@ -50,8 +50,7 @@ public class XuechengPlusContentApplicationTests {
     }
     @Test
     public void testCourseCategoryMapper() {
-        List<CourseCategoryTreeDto> courseCategoryTreeDtos = courseCategoryMapper.selectTreeNodes("1");
+        List<CourseCategoryTreeDto> courseCategoryTreeDtos = courseCategoryMapper.selectTreeNodes();
         System.out.println(courseCategoryTreeDtos);
-
     }
 }

@@ -26,7 +26,7 @@ public class CourseCategoryServiceImpl extends ServiceImpl<CourseCategoryMapper,
      * @return 返回的列表
      */
     @Override
-    public List<CourseCategoryTreeDto> queryTreeNode(String id) {
-        return courseCategoryMapper.selectTreeNodes(id);
+    public List<CourseCategoryTreeDto> queryTreeNode() {
+        return courseCategoryMapper.selectTreeNodes();
     }
 }

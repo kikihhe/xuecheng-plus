@@ -25,6 +25,6 @@ public class CourseCategoryController {
     @ApiOperation("查询所有课程的分类,以树结构返回")
     @GetMapping("/course-category/tree-nodes")
     public List<CourseCategoryTreeDto> queryTreeNodes() {
-        return courseCategoryService.queryTreeNode("1");
+        return courseCategoryService.queryTreeNode();
     }
 }

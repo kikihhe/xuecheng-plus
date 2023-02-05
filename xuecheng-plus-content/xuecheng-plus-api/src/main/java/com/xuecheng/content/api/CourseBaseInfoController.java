@@ -10,6 +10,7 @@ import com.xuecheng.servicce.CourseBaseService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,9 +49,9 @@ public class CourseBaseInfoController {
      */
     @ApiOperation("新增课程")
     @PostMapping("/course")
-    public CourseBaseInfoDto addCourse(@RequestBody AddCourseDto addCourseDto) {
+    public CourseBaseInfoDto addCourse(@RequestBody @Validated AddCourseDto addCourseDto) throws RuntimeException {
         // 获取当前登录用户所属的培训机构的id
-        // TODO 当前是假数据
+        // TODO 当前是假数据, 公司id未完成,待登录接口完成过后补充
         Long companyId = 22L;
 
         //

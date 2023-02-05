@@ -33,6 +33,7 @@ import java.util.Objects;
 @Transactional
 public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseBase> implements CourseBaseService {
 
+
     @Autowired
     private CourseBaseMapper courseBaseMapper;
 
@@ -84,7 +85,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      * @return 新增的课程的信息
      */
     @Override
-    public CourseBaseInfoDto createCourse(Long companyId, AddCourseDto addCourseDto) {
+    public CourseBaseInfoDto createCourse(Long companyId, AddCourseDto addCourseDto) throws RuntimeException {
         if ("201001".equals(addCourseDto.getCharge()) && StringUtils.isBlank(String.valueOf(addCourseDto.getPrice()))) {
             throw new RuntimeException("收费课程必须填写价格");
         }
@@ -102,7 +103,6 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
         // 此id为courseBase插入后生成的主键
         Long id = courseBase.getId();
-//        courseBase.setId(id);
 
         // 再将数据插入course_market表中
         CourseMarket courseMarket = new CourseMarket();
@@ -129,7 +129,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         }
 
 
-        // 封装信息
+        // 封装返回信息
         CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
         BeanUtils.copyProperties(courseBase, courseBaseInfoDto);
         BeanUtils.copyProperties(courseMarket, courseBaseInfoDto);
