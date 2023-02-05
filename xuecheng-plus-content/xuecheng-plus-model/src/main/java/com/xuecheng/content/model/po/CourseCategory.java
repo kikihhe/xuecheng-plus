@@ -43,7 +43,7 @@ public class CourseCategory implements Serializable {
     /**
      * 排序字段
      */
-    private Integer orderBy;
+    private Integer orderby;
 
     /**
      * 是否为叶子节点
