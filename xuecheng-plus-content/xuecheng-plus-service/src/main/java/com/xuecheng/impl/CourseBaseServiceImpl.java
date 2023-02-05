@@ -86,7 +86,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      */
     @Override
     public CourseBaseInfoDto createCourse(Long companyId, AddCourseDto addCourseDto) throws RuntimeException {
-        if ("201001".equals(addCourseDto.getCharge()) && StringUtils.isBlank(String.valueOf(addCourseDto.getPrice()))) {
+        if ("201001".equals(addCourseDto.getCharge()) && new Float(0).equals(addCourseDto.getPrice())) {
             throw new RuntimeException("收费课程必须填写价格");
         }
 

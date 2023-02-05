@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -84,12 +85,14 @@ public class AddCourseDto {
      * 价格，现价
      */
     @ApiModelProperty(value = "价格")
+    @NotNull(message = "现价不能为空")
     private Float price;
 
     /**
      * 原价
      */
     @ApiModelProperty(value = "原价")
+    @NotNull(message = "原价不能为空")
     private Float originalPrice;
 
     /**

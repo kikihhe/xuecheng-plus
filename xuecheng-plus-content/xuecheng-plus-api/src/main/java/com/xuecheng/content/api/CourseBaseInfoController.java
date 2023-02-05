@@ -54,7 +54,7 @@ public class CourseBaseInfoController {
         // TODO 当前是假数据, 公司id未完成,待登录接口完成过后补充
         Long companyId = 22L;
 
-        //
+        // 执行插入操作
         return courseBaseService.createCourse(companyId, addCourseDto);
 
     }
