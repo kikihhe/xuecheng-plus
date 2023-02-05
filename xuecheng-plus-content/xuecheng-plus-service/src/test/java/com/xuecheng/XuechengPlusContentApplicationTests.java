@@ -2,14 +2,19 @@ package com.xuecheng;
 
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.content.model.dto.CourseCategoryTreeDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.mapper.CourseBaseMapper;
+import com.xuecheng.mapper.CourseCategoryMapper;
 import com.xuecheng.servicce.CourseBaseService;
 import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.style.DefaultToStringStyler;
+
+import java.util.List;
 
 /**
  * @author : 小何
@@ -23,6 +28,8 @@ public class XuechengPlusContentApplicationTests {
     private CourseBaseMapper courseBaseMapper;
     @Autowired
     private CourseBaseService courseBaseService;
+    @Autowired
+    private CourseCategoryMapper courseCategoryMapper;
 
     @Test
     public void testCourseBaseMapper() {
@@ -39,6 +46,12 @@ public class XuechengPlusContentApplicationTests {
         PageParams pageParams = new PageParams();
         PageResult<CourseBase> courseBasePageResult = courseBaseService.queryCourseBaseList(pageParams, new QueryCourseParamsDto());
         System.out.println(courseBasePageResult);
+
+    }
+    @Test
+    public void testCourseCategoryMapper() {
+        List<CourseCategoryTreeDto> courseCategoryTreeDtos = courseCategoryMapper.selectTreeNodes("1");
+        System.out.println(courseCategoryTreeDtos);
 
     }
 }
