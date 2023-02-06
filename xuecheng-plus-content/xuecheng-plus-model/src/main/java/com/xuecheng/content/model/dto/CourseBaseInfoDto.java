@@ -1,12 +1,13 @@
 package com.xuecheng.content.model.dto;
 
+import com.xuecheng.content.model.po.CourseBase;
 import lombok.Data;
 
 /**
  * 新增课程api的返回值
  */
 @Data
-public class CourseBaseInfoDto {
+public class CourseBaseInfoDto extends CourseBase {
     /**
      * 收费规则, 对应数据字典
      */

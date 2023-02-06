@@ -7,6 +7,7 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
+import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.model.po.CourseCategory;
@@ -15,12 +16,15 @@ import com.xuecheng.mapper.CourseBaseMapper;
 import com.xuecheng.mapper.CourseCategoryMapper;
 import com.xuecheng.mapper.CourseMarketMapper;
 import com.xuecheng.servicce.CourseBaseService;
+import com.xuecheng.servicce.CourseMarketService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -31,6 +35,7 @@ import java.util.Objects;
  */
 @Service
 @Transactional
+@Slf4j
 public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseBase> implements CourseBaseService {
 
 
@@ -42,6 +47,8 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     @Autowired
     private CourseCategoryMapper courseCategoryMapper;
+
+    private CourseMarketService courseMarketService;
 
 
     /**
@@ -114,8 +121,26 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
             throw new RuntimeException("添加课程失败");
         }
 
-        String mt = addCourseDto.getMt();
-        String st = addCourseDto.getSt();
+
+        return getCourseBaseInfo(id);
+    }
+
+
+    /**
+     * 根据id获取课程信息
+     * @param id 课程id
+     * @return 课程信息
+     */
+    @Override
+    public CourseBaseInfoDto getCourseBaseInfo(Long id) {
+        CourseBase courseBase = courseBaseMapper.selectById(id);
+        CourseMarket courseMarket = courseMarketMapper.selectById(id);
+
+        CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
+
+
+        String mt = courseBase.getMt();
+        String st = courseBase.getSt();
         CourseCategory mtCategory = courseCategoryMapper.selectById(mt);
         CourseCategory stCategory = courseCategoryMapper.selectById(st);
         String mtName = null;
@@ -130,11 +155,54 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
 
         // 封装返回信息
-        CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
         BeanUtils.copyProperties(courseBase, courseBaseInfoDto);
         BeanUtils.copyProperties(courseMarket, courseBaseInfoDto);
         courseBaseInfoDto.setMtName(mtName);
         courseBaseInfoDto.setStName(stName);
+
         return courseBaseInfoDto;
+    }
+
+
+    /**
+     * 修改课程信息
+     * @param companyId 课程所属机构名称
+     * @param dto 修改后的信息
+     * @return 返回修改后的信息
+     */
+    @Override
+    public CourseBaseInfoDto updateCourseBaseInfo(@NotNull(message = "必须先登录再更改课程信息") Long companyId,
+                                                  EditCourseDto dto) {
+        // 查询课程是否存在
+        Long id = dto.getId();
+        CourseBase courseBase = courseBaseMapper.selectById(id);
+        if (Objects.isNull(courseBase)) {
+            log.error("id为: {}的课程不存在!", id);
+            throw new RuntimeException("该课程不存在");
+        }
+        if (!companyId.equals(courseBase.getCompanyId())) {
+            log.error("操作机构id:{}与被操作的课程所属机构id:{}不同!", id, courseBase.getCompanyId());
+            throw new RuntimeException("只能修改本机构的课程哦");
+        }
+
+        // 修改课程基本信息
+        BeanUtils.copyProperties(courseBase, dto);
+        courseBase.setChangeDate(LocalDateTime.now());
+        int updateCourseBase = courseBaseMapper.updateById(courseBase);
+
+
+        // 修改价格等营销信息, 有则修改，无则添加
+        CourseMarket courseMarket = courseMarketMapper.selectById(id);
+        if(!Objects.isNull(courseMarket)) {
+            BeanUtils.copyProperties(courseMarket, dto);
+        }
+
+        boolean b = courseMarketService.saveOrUpdate(courseMarket);
+
+        if (updateCourseBase != 1 || !b) {
+            throw new RuntimeException("修改课程失败!");
+        }
+
+        return getCourseBaseInfo(id);
     }
 }

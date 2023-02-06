@@ -28,8 +28,13 @@ public class GlobalExceptionHandler {
         return new RestErrorResponse(message);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)//此方法捕获MethodArgumentNotValidException异常
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)//状态码返回500
+    /**
+     * 捕获参数校验产生的bug，例如参数为空、参数不符合要求
+     * @param e 参数校验产生的异常
+     * @return 返回统一异常信息
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public RestErrorResponse doMethodArgumentNotValidException(MethodArgumentNotValidException e){
 
         BindingResult bindingResult = e.getBindingResult();

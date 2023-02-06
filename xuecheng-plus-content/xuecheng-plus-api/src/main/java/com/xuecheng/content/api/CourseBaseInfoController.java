@@ -4,6 +4,7 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
+import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.servicce.CourseBaseService;
@@ -11,9 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 课程管理相关接口
@@ -57,6 +56,31 @@ public class CourseBaseInfoController {
         // 执行插入操作
         return courseBaseService.createCourse(companyId, addCourseDto);
 
+    }
+
+
+    /**
+     * 修改之前查询课程信息
+     * @param courseId 课程id
+     * @return 课程信息
+     */
+    @GetMapping("/course/{courseId}")
+    public CourseBaseInfoDto getCourseInfoById(@PathVariable Long courseId) {
+        CourseBaseInfoDto courseBaseInfo = courseBaseService.getCourseBaseInfo(courseId);
+
+        return courseBaseInfo;
+
+    }
+
+    /**
+     * 修改课程
+     * @param companyId 用于校验，本机构只能修改本机构的课程
+     * @param dto 修改后的信息
+     * @return 返回修改后的信息
+     */
+    @PutMapping("/course")
+    public CourseBaseInfoDto modifyCourseBase(Long companyId, @RequestBody @Validated EditCourseDto dto) {
+        return courseBaseService.updateCourseBaseInfo(companyId, dto);
     }
 
 }
