@@ -48,6 +48,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     @Autowired
     private CourseCategoryMapper courseCategoryMapper;
 
+    @Autowired
     private CourseMarketService courseMarketService;
 
 
@@ -180,10 +181,10 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
             log.error("id为: {}的课程不存在!", id);
             throw new RuntimeException("该课程不存在");
         }
-        if (!companyId.equals(courseBase.getCompanyId())) {
-            log.error("操作机构id:{}与被操作的课程所属机构id:{}不同!", id, courseBase.getCompanyId());
-            throw new RuntimeException("只能修改本机构的课程哦");
-        }
+//        if (!companyId.equals(courseBase.getCompanyId())) {
+//            log.error("操作机构id:{}与被操作的课程所属机构id:{}不同!", id, courseBase.getCompanyId());
+//            throw new RuntimeException("只能修改本机构的课程哦");
+//        }
 
         // 修改课程基本信息
         BeanUtils.copyProperties(courseBase, dto);
