@@ -132,10 +132,18 @@
                     m1.media_id mediaId
 
                 from teachplan one
-                         INNER JOIN teachplan two on one.id = two.parentid
+                         left JOIN teachplan two on one.id = two.parentid
                          LEFT JOIN teachplan_media m1 on m1.teachplan_id = two.id
                 where one.parentid = 0 and one.course_id=#{courseId}
                 order by one.orderby,
                          two.orderby
+    </select>
+    <select id="selectTeachplanOrderby" resultType="java.lang.Integer">
+        select (orderby + 1)
+            as orderby
+        from teachplan
+        where course_id = #{courseId} and parentid = #{parentId}
+        order by orderby desc
+        limit 1;
     </select>
 </mapper>

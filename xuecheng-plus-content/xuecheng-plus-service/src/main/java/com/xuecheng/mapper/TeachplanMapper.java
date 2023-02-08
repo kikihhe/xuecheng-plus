@@ -15,5 +15,8 @@ import java.util.List;
  */
 @Mapper
 public interface TeachplanMapper extends BaseMapper<Teachplan> {
+
     public List<TeachplanDto> selectTreeNodes(@Param("courseId") Long courseId);
+
+    public Integer selectTeachplanOrderby(@Param("courseId") Long courseId,@Param("parentId") Long parentId);
 }
