@@ -1,6 +1,8 @@
 package com.xuecheng.media.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.j256.simplemagic.ContentInfo;
+import com.j256.simplemagic.ContentInfoUtil;
 import com.xuecheng.media.mapper.MediaFileMapper;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
@@ -13,7 +15,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +35,7 @@ import java.util.UUID;
  * @date : 2023-02-09 18:16
  */
 @Service
+@Transactional
 public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFiles> implements MediaFileService {
 
     @Autowired
@@ -71,20 +76,63 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         if (StringUtils.isEmpty(objectName)) {
             objectName = generateFileName(LocalDateTime.now()) + filename.substring(filename.lastIndexOf("."));
         }
+        // 完整的文件名 = 文件目录 + 文件名
         objectName = folder + objectName;
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-        String contentType = dto.getContentType();
-
-        minioClient.putObject(PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .object(objectName)
-                        .contentType(contentType)
-                        .stream(inputStream, inputStream.available(), -1)
-                        .build());
+        // 上传
+        addMediaToMinIO(bytes, bucket, objectName);
 
         // 2. 插入数据库
         // 先看看数据库中有没有
         String fileMd5 = DigestUtils.md5DigestAsHex(bytes);
+        MediaFiles mediaFiles = addMediaToDB(companyId, fileMd5, dto, bucket, objectName);
+
+        // 3. 封装数据返回
+        UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
+        BeanUtils.copyProperties(mediaFiles, uploadFileResultDto);
+
+        return uploadFileResultDto;
+    }
+
+    /**
+     * 将文件上传至MinIO
+     * @param bytes 文件的字节数组
+     * @param bucket 文件上传到哪个桶
+     * @param objectName 文件全限定名称
+     */
+    public void addMediaToMinIO(byte[] bytes, String bucket, String objectName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        // 文件类型默认为默认类型:application/octet-stream
+        String contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        if (objectName.contains(".")) {
+            // 文件后缀名
+            String extension = objectName.substring(objectName.lastIndexOf("."));
+            // 根据文件后缀名拿到文件类型
+            ContentInfo extensionMatch = ContentInfoUtil.findExtensionMatch(extension);
+            // 如果是正确的文件类型，赋值给contentType。如果是离谱的，例如:.abc，pass掉。
+            if (!Objects.isNull(extensionMatch)) {
+                contentType = extensionMatch.getMimeType();
+            }
+        }
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        minioClient.putObject(PutObjectArgs.builder()
+                .bucket(bucket)
+                .object(objectName)
+                .contentType(contentType)
+                .stream(inputStream, inputStream.available(), -1)
+                .build());
+
+    }
+
+    /**
+     * 将文件信息保存到数据库
+     * @param companyId 上传人所属的公司/机构的id
+     * @param fileId 文件的md5值
+     * @param dto 文件信息
+     * @param bucket 文件放在哪个桶
+     * @param objectName 文件的全限定名
+     * @return 返回文件的基本信息
+     */
+    private MediaFiles addMediaToDB(Long companyId, String fileId,UploadFileParamsDto dto, String bucket, String objectName) {
+        String fileMd5 = fileId;
         MediaFiles mediaFiles = mediaFileMapper.selectById(fileMd5);
         // 如果数据库中没有这个文件, 插入
         if (Objects.isNull(mediaFiles)) {
@@ -94,7 +142,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
             mediaFiles.setId(fileMd5);
             mediaFiles.setFileId(fileMd5);
             mediaFiles.setCompanyId(companyId);
-            mediaFiles.setFilename(filename);
+            mediaFiles.setFilename(dto.getFilename());
             mediaFiles.setBucket(bucket);
             mediaFiles.setFilePath(objectName);
             mediaFiles.setUrl("/" + bucket + "/" + objectName);
@@ -105,19 +153,20 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
             if (insert != 1) {
                 throw new RuntimeException("文件插入数据库失败!");
             }
+        } else {
+            throw new RuntimeException("该文件已存在!无法重复上传");
         }
-        UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
-        BeanUtils.copyProperties(mediaFiles, uploadFileResultDto);
-
-        return uploadFileResultDto;
+        return mediaFiles;
     }
 
+    // 生成文件目录
     public String getFolder(LocalDate localDate) {
         String[] split = localDate.toString().split("-");
         // 如: 2023/2/9
         return split[0] + "/" + split[1] + "/" + split[2] + "/";
     }
 
+    // 生成给文件名
     public String generateFileName(LocalDateTime localDateTime) {
         int hour = localDateTime.getHour();
         int minute = localDateTime.getMinute();
