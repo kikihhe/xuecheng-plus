@@ -12,6 +12,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +36,6 @@ import java.util.UUID;
  * @date : 2023-02-09 18:16
  */
 @Service
-@Transactional
 public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFiles> implements MediaFileService {
 
     @Autowired
@@ -81,10 +81,10 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         // 上传
         addMediaToMinIO(bytes, bucket, objectName);
 
-        // 2. 插入数据库
-        // 先看看数据库中有没有
+        // 2. 插入数据库, 为防止事务失效，使用代理类的addMediaToDB方法。
         String fileMd5 = DigestUtils.md5DigestAsHex(bytes);
-        MediaFiles mediaFiles = addMediaToDB(companyId, fileMd5, dto, bucket, objectName);
+        MediaFileServiceImpl mediaFileService = (MediaFileServiceImpl) AopContext.currentProxy();
+        MediaFiles mediaFiles = mediaFileService.addMediaToDB(companyId, fileMd5, dto, bucket, objectName);
 
         // 3. 封装数据返回
         UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
@@ -131,7 +131,9 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
      * @param objectName 文件的全限定名
      * @return 返回文件的基本信息
      */
-    private MediaFiles addMediaToDB(Long companyId, String fileId,UploadFileParamsDto dto, String bucket, String objectName) {
+    @Transactional
+    public MediaFiles addMediaToDB(Long companyId, String fileId,UploadFileParamsDto dto, String bucket, String objectName) {
+        // 先看看数据库中有没有
         String fileMd5 = fileId;
         MediaFiles mediaFiles = mediaFileMapper.selectById(fileMd5);
         // 如果数据库中没有这个文件, 插入
