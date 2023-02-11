@@ -17,16 +17,16 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
 
-
-
-    @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public RestErrorResponse doRuntimeException(RuntimeException e) {
-        String message = e.getMessage();
-        log.error("异常类: {}", e);
-        log.error("异常信息: {}",message);
-        return new RestErrorResponse(message);
-    }
+//
+//
+//    @ExceptionHandler(RuntimeException.class)
+//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+//    public RestErrorResponse doRuntimeException(RuntimeException e) {
+//        String message = e.getMessage();
+//        log.error("异常类: {}", e);
+//        log.error("异常信息: {}",message);
+//        return new RestErrorResponse(message);
+//    }
 
     /**
      * 捕获参数校验产生的bug，例如参数为空、参数不符合要求

@@ -20,11 +20,29 @@ import java.security.NoSuchAlgorithmException;
  * @date : 2023-02-09 18:16
  */
 public interface MediaFileService extends IService<MediaFiles> {
-    public RestResponse chickFile(String md5);
+    /**
+     * 检查需要上传的文件
+     * @param md5 文件的md5
+     * @return
+     */
+    public RestResponse checkFile(String md5);
 
-    public RestResponse checkChunk(String md5, int chunk);
+    /**
+     * 检查分块是否已经下载
+     * @param md5
+     * @param chunk
+     * @return
+     */
+    public RestResponse checkChunk(String md5, int chunk) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
 
 
+    /**
+     * 分页条件查询文件，显示.
+     * @param companyId
+     * @param pageParams
+     * @param dto
+     * @return
+     */
     public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto dto);
 
     /**
@@ -41,5 +59,15 @@ public interface MediaFileService extends IService<MediaFiles> {
                                           UploadFileParamsDto dto,
                                           String folder,
                                           String objectName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
+
+
+    /**
+     * 上传分块
+     * @param md5 上传的分块所属的文件
+     * @param chunk 上传的分块的序号
+     * @param bytes 上传的分块的字节内容
+     * @return
+     */
+    public RestResponse uploadChunk(String md5, int chunk, byte[] bytes);
 
 }

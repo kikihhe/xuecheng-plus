@@ -65,7 +65,7 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
      * @return
      */
     @Override
-    public RestResponse<Boolean> chickFile(String md5) {
+    public RestResponse<Boolean> checkFile(String md5) {
         MediaFiles mediaFiles = mediaFileMapper.selectById(md5);
         // 1. 查看是否在数据库中存在
         if (Objects.isNull(mediaFiles)) {
@@ -88,36 +88,60 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         return RestResponse.success(true);
     }
 
-    /**
-     * 检查分片文件是否存在
-     * @param md5 分片所属文件的md5值
-     * @param chunk 该分片的序号
-     * @return
-     */
+
     @Override
-    public RestResponse checkChunk(String md5, int chunk) {
-        // 拿到分块文件的存储目录
-        String chunkFileFolderPath = getChunkFileFolderPath(md5);
-        // 根据目录就可以拼接出文件的路径 = 存储目录+序号
-        String chunkPath = chunkFileFolderPath + chunk;
+    public RestResponse<Boolean> checkChunk(String fileMd5, int chunkIndex) {
 
+        //得到分块文件所在目录
+        String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
+        //分块文件的路径
+        String chunkFilePath = chunkFileFolderPath + chunkIndex;
 
-        // 2. 查看是否在MinIO中存在
+        //查询文件系统分块文件是否存在
+        //查看是否在文件系统存在
+        GetObjectArgs getObjectArgs = GetObjectArgs.builder()
+                .bucket(bucket_video)
+                .object(chunkFilePath)
+                .build();
         try {
-            InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
-                    .bucket(bucket_video)
-                    .object(chunkPath)
-                    .build());
-            if (Objects.isNull(inputStream)) {
+            InputStream inputStream = minioClient.getObject(getObjectArgs);
+            if(Objects.isNull(inputStream)){
+                //文件不存在
                 return RestResponse.success(false);
             }
-        } catch (Exception e) {
-            log.error("{}", e);
+        }catch (Exception e){
+            //文件不存在
             return RestResponse.success(false);
-
         }
+
+
         return RestResponse.success(true);
     }
+
+//    @Override
+//    public RestResponse checkChunk(String md5, int chunk) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+//        // 拿到分块文件的存储目录
+//        String chunkFileFolderPath = getChunkFileFolderPath(md5);
+//        // 根据目录就可以拼接出文件的路径 = 存储目录+序号
+//        String chunkPath = chunkFileFolderPath + chunk;
+//
+//
+//
+//        // 2. 查看是否在MinIO中存在
+//        try {
+//            GetObjectArgs build = GetObjectArgs.builder()
+//                    .bucket(bucket_video)
+//                    .object(chunkPath)
+//                    .build();
+//            InputStream inputStream = minioClient.getObject(build);
+//            if (Objects.isNull(inputStream)) {
+//                return RestResponse.success(false);
+//            }
+//        } catch (Exception e) {
+//            return RestResponse.success(true);
+//        }
+//        return RestResponse.success(true);
+//    }
 
     /**
      * 查询本机构所有文件
@@ -188,6 +212,29 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         BeanUtils.copyProperties(mediaFiles, uploadFileResultDto);
 
         return uploadFileResultDto;
+    }
+    /**
+     * 上传分块
+     * @param md5 上传的分块所属的文件
+     * @param chunk 上传的分块的序号
+     * @param bytes 上传的分块的字节内容
+     * @return
+     */
+    @Override
+    public RestResponse uploadChunk(String md5, int chunk, byte[] bytes) {
+        // 获取文件应该放在哪个目录
+        String chunkFileFolderPath = getChunkFileFolderPath(md5);
+        // 获取分块的完整路径
+        String chunkPath = chunkFileFolderPath + chunk;
+
+        try {
+            addMediaToMinIO(bytes, bucket_video, chunkPath);
+
+        } catch (Exception e) {
+            throw new RuntimeException("文件上传失败!");
+        }
+
+        return RestResponse.success();
     }
 
     /**
