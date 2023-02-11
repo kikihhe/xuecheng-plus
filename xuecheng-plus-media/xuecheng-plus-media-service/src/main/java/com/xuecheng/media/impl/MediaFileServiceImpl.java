@@ -7,12 +7,14 @@ import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.mapper.MediaFileMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
 import com.xuecheng.media.service.MediaFileService;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.*;
@@ -29,6 +31,7 @@ import org.springframework.util.DigestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
@@ -48,10 +51,73 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
     @Autowired
     private MinioClient minioClient;
     @Value("${minio.bucket.files}")
-    private String bucket;
+    private String bucket_file;
+    @Value("${minio.bucket.videofiles}")
+    private String bucket_video;
+
     @Autowired
     private MediaFileMapper mediaFileMapper;
 
+
+    /**
+     * 检查文件是否存在
+     * @param md5
+     * @return
+     */
+    @Override
+    public RestResponse<Boolean> chickFile(String md5) {
+        MediaFiles mediaFiles = mediaFileMapper.selectById(md5);
+        // 1. 查看是否在数据库中存在
+        if (Objects.isNull(mediaFiles)) {
+            return RestResponse.success(false);
+        }
+        // 2. 查看是否在MinIO中存在
+        try {
+            InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
+                            .bucket(mediaFiles.getBucket())
+                    .object(mediaFiles.getFilePath())
+                    .build());
+            if (Objects.isNull(inputStream)) {
+                return RestResponse.success(false);
+            }
+        } catch (Exception e) {
+            log.error("{}", e);
+            return RestResponse.success(false);
+
+        }
+        return RestResponse.success(true);
+    }
+
+    /**
+     * 检查分片文件是否存在
+     * @param md5 分片所属文件的md5值
+     * @param chunk 该分片的序号
+     * @return
+     */
+    @Override
+    public RestResponse checkChunk(String md5, int chunk) {
+        // 拿到分块文件的存储目录
+        String chunkFileFolderPath = getChunkFileFolderPath(md5);
+        // 根据目录就可以拼接出文件的路径 = 存储目录+序号
+        String chunkPath = chunkFileFolderPath + chunk;
+
+
+        // 2. 查看是否在MinIO中存在
+        try {
+            InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(bucket_video)
+                    .object(chunkPath)
+                    .build());
+            if (Objects.isNull(inputStream)) {
+                return RestResponse.success(false);
+            }
+        } catch (Exception e) {
+            log.error("{}", e);
+            return RestResponse.success(false);
+
+        }
+        return RestResponse.success(true);
+    }
 
     /**
      * 查询本机构所有文件
@@ -110,12 +176,12 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         // 完整的文件名 = 文件目录 + 文件名
         objectName = folder + objectName;
         // 上传
-        addMediaToMinIO(bytes, bucket, objectName);
+        addMediaToMinIO(bytes, bucket_file, objectName);
 
         // 2. 插入数据库, 为防止事务失效，使用代理类的addMediaToDB方法。
         String fileMd5 = DigestUtils.md5DigestAsHex(bytes);
         MediaFileServiceImpl mediaFileService = (MediaFileServiceImpl) AopContext.currentProxy();
-        MediaFiles mediaFiles = mediaFileService.addMediaToDB(companyId, fileMd5, dto, bucket, objectName);
+        MediaFiles mediaFiles = mediaFileService.addMediaToDB(companyId, fileMd5, dto, bucket_file, objectName);
 
         // 3. 封装数据返回
         UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
@@ -207,6 +273,15 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         String substring = UUID.randomUUID().toString().substring(0, 7);
         return hour + ":" + minute + ":" + second + ":" + substring;
 
+    }
+
+    /**
+     * 得到分块文件的目录,上传分块时按照md5进行分块，检查时也按照这个目录检查
+     * @param fileMd5
+     * @return
+     */
+    private String getChunkFileFolderPath(String fileMd5) {
+        return fileMd5.substring(0, 1) + "/" + fileMd5.substring(1, 2) + "/" + fileMd5 + "/" + "chunk" + "/";
     }
 
 
