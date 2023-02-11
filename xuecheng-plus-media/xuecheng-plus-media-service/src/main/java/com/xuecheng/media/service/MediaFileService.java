@@ -1,6 +1,9 @@
 package com.xuecheng.media.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.xuecheng.base.model.PageParams;
+import com.xuecheng.base.model.PageResult;
+import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
@@ -16,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
  * @date : 2023-02-09 18:16
  */
 public interface MediaFileService extends IService<MediaFiles> {
+    public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto dto);
 
     /**
      * 上传文件

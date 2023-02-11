@@ -1,9 +1,14 @@
 package com.xuecheng.media.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
+import com.xuecheng.base.model.PageParams;
+import com.xuecheng.base.model.PageResult;
 import com.xuecheng.media.mapper.MediaFileMapper;
+import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
@@ -12,6 +17,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +33,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -44,6 +51,30 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
     private String bucket;
     @Autowired
     private MediaFileMapper mediaFileMapper;
+
+
+    /**
+     * 查询本机构所有文件
+     * @param companyId 本机构id
+     * @param pageParams 分页参数: 当前页码、每页数据数
+     * @param dto 查询条件
+     * @return 返回结果
+     */
+    @Override
+    public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto dto) {
+        LambdaQueryWrapper<MediaFiles> queryWrapper = new LambdaQueryWrapper<>();
+//        queryWrapper.eq(MediaFiles::getFilename, dto.getFilename());
+        queryWrapper.like(MediaFiles::getFilename, dto.getFilename());
+        if (!Strings.isEmpty(dto.getFileType())) {
+            queryWrapper.eq(MediaFiles::getFileType, dto.getFileType());
+        }
+        Page<MediaFiles> page = new Page<>(pageParams.getPageNo(), pageParams.getPageSize());
+        mediaFileMapper.selectPage(page, queryWrapper);
+        List<MediaFiles> records = page.getRecords();
+        long total = page.getTotal();
+        PageResult<MediaFiles> pageResult = new PageResult<>(records, total, pageParams.getPageNo(), pageParams.getPageSize());
+        return pageResult;
+    }
 
 
 

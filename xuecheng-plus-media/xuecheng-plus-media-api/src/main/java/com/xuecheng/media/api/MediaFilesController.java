@@ -43,12 +43,11 @@ public class MediaFilesController {
 
 
 
-    @ApiOperation("查询所有文件")
+    @ApiOperation("媒资列表查询接口")
     @PostMapping("/files")
-    public PageResult<MediaFiles> list(PageParams pageParams,@RequestBody QueryMediaParamsDto dto) {
-
-
-        return null;
+    public PageResult<MediaFiles> list(PageParams pageParams, @RequestBody QueryMediaParamsDto queryMediaParamsDto) {
+        Long companyId = 1232141425L;
+        return mediaFileService.queryMediaFiles(companyId, pageParams, queryMediaParamsDto);
     }
 
 
