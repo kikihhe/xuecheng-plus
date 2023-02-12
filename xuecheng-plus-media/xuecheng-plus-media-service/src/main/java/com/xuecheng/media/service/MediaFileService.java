@@ -70,4 +70,14 @@ public interface MediaFileService extends IService<MediaFiles> {
      */
     public RestResponse uploadChunk(String md5, int chunk, byte[] bytes);
 
+
+    /**
+     * 合并分块
+     * @param companyId 该文件属于哪个机构
+     * @param chunkTotal 一共有多少个分块
+     * @param dto 需要合并的文件的信息
+     * @return
+     */
+    public RestResponse mergeChunks(Long companyId, String fileMd5, int chunkTotal, UploadFileParamsDto dto) throws IOException;
+
 }

@@ -18,6 +18,7 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.*;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.aop.framework.AopContext;
@@ -29,9 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
@@ -118,30 +117,6 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         return RestResponse.success(true);
     }
 
-//    @Override
-//    public RestResponse checkChunk(String md5, int chunk) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-//        // 拿到分块文件的存储目录
-//        String chunkFileFolderPath = getChunkFileFolderPath(md5);
-//        // 根据目录就可以拼接出文件的路径 = 存储目录+序号
-//        String chunkPath = chunkFileFolderPath + chunk;
-//
-//
-//
-//        // 2. 查看是否在MinIO中存在
-//        try {
-//            GetObjectArgs build = GetObjectArgs.builder()
-//                    .bucket(bucket_video)
-//                    .object(chunkPath)
-//                    .build();
-//            InputStream inputStream = minioClient.getObject(build);
-//            if (Objects.isNull(inputStream)) {
-//                return RestResponse.success(false);
-//            }
-//        } catch (Exception e) {
-//            return RestResponse.success(true);
-//        }
-//        return RestResponse.success(true);
-//    }
 
     /**
      * 查询本机构所有文件
@@ -237,6 +212,92 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         return RestResponse.success();
     }
 
+
+    /**
+     * 合并分块
+     * @param companyId 该文件属于哪个机构
+     * @param chunkTotal 一共有多少个分块
+     * @param dto 需要合并的文件的信息
+     * @return
+     */
+    @Override
+    public RestResponse mergeChunks(Long companyId, String fileMd5, int chunkTotal, UploadFileParamsDto dto) throws IOException {
+        // 1. 下载分块
+        File[] files = downloadChunks(fileMd5, chunkTotal);
+        // 2. 合并分块
+        // 2.1 获取文件扩展名
+        String filename = dto.getFilename();
+        String extension = filename.substring(filename.lastIndexOf("."));
+        // 2.2 创建临时文件用于分块的合并
+        File tempMergeFile = File.createTempFile("merge", extension);
+
+        // 2.3 开始合并
+        RandomAccessFile raf_write = new RandomAccessFile(tempMergeFile, "rw");
+        byte[] b = new byte[1024];
+        for (File file : files) {
+            RandomAccessFile raf_read = new RandomAccessFile(file, "r");
+            int len = -1;
+            while ((len = raf_read.read(b)) != -1) {
+                raf_write.write(b, 0, len);
+            }
+        }
+
+        // 3. 校验合并后的文件与原始文件的md5值是否相同
+        FileInputStream inputStream = new FileInputStream(tempMergeFile);
+        String mergeFileMd5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(inputStream);
+        if (fileMd5.equals(mergeFileMd5)) {
+
+        }
+
+        return null;
+    }
+
+    /**
+     * 下载所有分块
+     * @param md5 md5值
+     * @param chunkTotal 一共有多少分块
+     * @return
+     */
+    private File[] downloadChunks(String md5, int chunkTotal) {
+        // 分块文件所在目录
+        String chunkFileFolderPath = getChunkFileFolderPath(md5);
+        File[] files = new File[chunkTotal];
+        File tempFile = null;
+        // 开始下载
+        for (int i = 0; i < chunkTotal; i++) {
+            String chunkPath = chunkFileFolderPath + i;
+            try {
+                tempFile = File.createTempFile("chunk", null);
+            } catch (IOException e) {
+                throw new RuntimeException("创建临时文件出错!");
+            }
+            GetObjectArgs build = GetObjectArgs.builder()
+                    .bucket(bucket_video)
+                    .object(chunkPath)
+                    .build();
+            FileOutputStream fileOutputStream = null;
+
+            try {
+                InputStream inputStream = minioClient.getObject(build);
+                fileOutputStream = new FileOutputStream(tempFile);
+                IOUtils.copy(inputStream, fileOutputStream);
+                files[i] = tempFile;
+            } catch (Exception e) {
+                throw new RuntimeException("下载文件分块失败, md5:" + md5 + "; 第" + i + "个分块");
+            } finally {
+                if (!Objects.isNull(fileOutputStream)) {
+                    try {
+                        fileOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        }
+        return files;
+    }
+
     /**
      * 将文件上传至MinIO
      * @param bytes 文件的字节数组
@@ -304,6 +365,8 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
         }
         return mediaFiles;
     }
+
+
 
     // 生成文件目录
     public String getFolder(LocalDate localDate) {
