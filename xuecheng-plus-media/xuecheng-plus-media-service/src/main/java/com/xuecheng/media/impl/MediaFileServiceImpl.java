@@ -242,6 +242,10 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
             }
         }
 
+
+
+
+
         // 3. 校验合并后的文件与原始文件的md5值是否相同
         FileInputStream inputStream = new FileInputStream(tempMergeFile);
         String mergeFileMd5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(inputStream);
