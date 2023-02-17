@@ -2,6 +2,7 @@ package com.xuecheng.media.api;
 
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
@@ -11,6 +12,7 @@ import io.minio.MinioClient;
 import io.minio.errors.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 /**
  * @author : 小何
@@ -30,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
  */
 @Api(value = "媒资文件管理接口", tags = "媒资文件管理接口")
 @RestController
+@Slf4j
 public class MediaFilesController {
     @Value("${minio.bucket.files}")
     private String bucket;
@@ -89,6 +93,32 @@ public class MediaFilesController {
 
         return mediaFileService.uploadFile(companyId, filedata.getBytes(), dto, folder, objectName);
 
+    }
+
+
+    /**
+     * 预览文件
+     * @param mediaId 文件id
+     * @return 返回该文件在MinIO中的路径
+     */
+    @ApiOperation("文件预览")
+    @GetMapping("/preview/{mediaId}")
+    public RestResponse<String> getPlayUrlByMediaId(@PathVariable String mediaId) {
+        if (StringUtils.isEmpty(mediaId)) {
+            throw new RuntimeException("文件id为空，你想看哪个文件?");
+        }
+        MediaFiles mediaFile = mediaFileService.getById(mediaId);
+        if (Objects.isNull(mediaFile)) {
+            log.error("查看id为 {} 的文件不存在!", mediaId);
+            throw new RuntimeException("文件不存在!");
+        }
+        String url = mediaFile.getUrl();
+        if (StringUtils.isEmpty(url)) {
+            log.error("预览 文件id为 {} , url为 {} 的文件失败", mediaId, url);
+            throw new RuntimeException("该文件不支持预览!");
+        }
+
+        return RestResponse.success(url);
     }
 
 }

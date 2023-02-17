@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.j256.simplemagic.ContentInfo;
+//import com.j256.simplemagic.ContentInfoUtil;
 import com.j256.simplemagic.ContentInfoUtil;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
@@ -358,6 +359,20 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
     }
 
     /**
+     * 根据后缀名获取文件类型
+     * @param extension 后缀名
+     * @return
+     */
+    private String getContentTypeByExtension(String extension) {
+        String contentType = null;
+        ContentInfo extensionMatch = ContentInfoUtil.findExtensionMatch(extension);
+        if (!Objects.isNull(extensionMatch)) {
+            contentType = extensionMatch.getMimeType();
+        }
+        return contentType;
+    }
+
+    /**
      * 将文件上传至MinIO
      * @param bytes 文件的字节数组
      * @param bucket 文件上传到哪个桶
@@ -410,7 +425,18 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
             mediaFiles.setFilename(dto.getFilename());
             mediaFiles.setBucket(bucket);
             mediaFiles.setFilePath(objectName);
-            mediaFiles.setUrl("/" + bucket + "/" + objectName);
+            // 获取文件类型，如果是特殊文件无法直接访问，不能生成url
+            String filename = dto.getFilename();
+            String extension = null;
+            if (!StringUtils.isEmpty(filename)) {
+                extension = filename.substring(filename.lastIndexOf("."));
+            }
+            String mimeType = getContentTypeByExtension(extension);
+            if (mimeType.contains("image") || mimeType.contains("mp4")) {
+                mediaFiles.setUrl("/" + bucket + "/" + objectName);
+            }
+
+
             mediaFiles.setCreateDate(LocalDateTime.now());
             mediaFiles.setStatus("1");
             mediaFiles.setAuditStatus("002003");
