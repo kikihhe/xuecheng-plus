@@ -17,7 +17,9 @@ import com.xuecheng.media.service.MediaFileService;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.UploadObjectArgs;
 import io.minio.errors.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -29,7 +31,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
-
 import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -45,6 +46,7 @@ import java.util.UUID;
  * @date : 2023-02-09 18:16
  */
 @Service
+@Slf4j
 public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFiles> implements MediaFileService {
 
     @Autowired
@@ -221,39 +223,77 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
      * @return
      */
     @Override
-    public RestResponse mergeChunks(Long companyId, String fileMd5, int chunkTotal, UploadFileParamsDto dto) throws IOException {
-        // 1. 下载分块
-        File[] files = downloadChunks(fileMd5, chunkTotal);
-        // 2. 合并分块
-        // 2.1 获取文件扩展名
-        String filename = dto.getFilename();
-        String extension = filename.substring(filename.lastIndexOf("."));
-        // 2.2 创建临时文件用于分块的合并
-        File tempMergeFile = File.createTempFile("merge", extension);
+    public RestResponse mergeChunks(Long companyId, String fileMd5, int chunkTotal, UploadFileParamsDto dto) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        FileInputStream inputStream = null;
+        RandomAccessFile raf_write = null;
 
-        // 2.3 开始合并
-        RandomAccessFile raf_write = new RandomAccessFile(tempMergeFile, "rw");
-        byte[] b = new byte[1024];
-        for (File file : files) {
-            RandomAccessFile raf_read = new RandomAccessFile(file, "r");
-            int len = -1;
-            while ((len = raf_read.read(b)) != -1) {
-                raf_write.write(b, 0, len);
+        try {
+            // 1. 下载分块
+            File[] files = downloadChunks(fileMd5, chunkTotal);
+
+
+            // 2. 合并分块
+            // 2.1 获取文件扩展名
+            String filename = dto.getFilename();
+            String extension = filename.substring(filename.lastIndexOf("."));
+            // 2.2 创建临时文件用于分块的合并
+            File tempMergeFile = null;
+            try {
+                tempMergeFile = File.createTempFile("merge", extension);
+            } catch (IOException e) {
+                log.error("创建合并临时文件失败, 文件md5:{}", fileMd5);
+                throw new IOException("创建合并临时文件失败");
+            }
+
+            // 2.3 开始合并
+            raf_write = new RandomAccessFile(tempMergeFile, "rw");
+            byte[] b = new byte[1024];
+            for (File file : files) {
+                RandomAccessFile raf_read = new RandomAccessFile(file, "r");
+                int len = -1;
+                while ((len = raf_read.read(b)) != -1) {
+                    raf_write.write(b, 0, len);
+                }
+            }
+
+            // 3. 校验合并后的文件与原始文件的md5值是否相同
+            inputStream = new FileInputStream(tempMergeFile);
+            String mergeFileMd5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(inputStream);
+            if (!fileMd5.equals(mergeFileMd5)) {
+                log.error("合并的文件与上传的文件不同");
+                throw new RuntimeException("合并文件校验失败!");
+            }
+
+            // 4. 合并后的文件上传的文件系统
+            String filePath = getAbsoluteFilePath(fileMd5, extension);
+            addMediaToMinIO(tempMergeFile.getAbsolutePath(), bucket_video, filePath);
+            // 5. 合并后的文件入库
+            addMediaToDB(companyId, fileMd5, dto, bucket_video, filePath);
+
+            // 6. 删除临时文件
+            if (!Objects.isNull(files)) {
+                for (File file : files) {
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                }
+            }
+            if (!Objects.isNull(tempMergeFile)) {
+                if (tempMergeFile.exists()) {
+                    tempMergeFile.delete();
+                }
+            }
+        } finally {
+            if (!Objects.isNull(inputStream)) {
+                inputStream.close();
+            }
+            if (!Objects.isNull(raf_write)) {
+                raf_write.close();
             }
         }
 
 
-
-
-
-        // 3. 校验合并后的文件与原始文件的md5值是否相同
-        FileInputStream inputStream = new FileInputStream(tempMergeFile);
-        String mergeFileMd5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(inputStream);
-        if (fileMd5.equals(mergeFileMd5)) {
-
-        }
-
-        return null;
+        return RestResponse.success();
     }
 
     /**
@@ -303,6 +343,21 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
     }
 
     /**
+     * 将服务器中合并的文件上传至MinIO
+     * @param filePath 文件路径
+     * @param bucket 哪个桶
+     * @param objectName 对象名称
+     */
+    private void addMediaToMinIO(String filePath, String bucket, String objectName) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        UploadObjectArgs uploadObjectArgs = UploadObjectArgs.builder()
+                .bucket(bucket)
+                .object(objectName)
+                .filename(filePath)
+                .build();
+        minioClient.uploadObject(uploadObjectArgs);
+    }
+
+    /**
      * 将文件上传至MinIO
      * @param bytes 文件的字节数组
      * @param bucket 文件上传到哪个桶
@@ -328,7 +383,6 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
                 .contentType(contentType)
                 .stream(inputStream, inputStream.available(), -1)
                 .build());
-
     }
 
     /**
@@ -396,6 +450,9 @@ public class MediaFileServiceImpl extends ServiceImpl<MediaFileMapper, MediaFile
      */
     private String getChunkFileFolderPath(String fileMd5) {
         return fileMd5.substring(0, 1) + "/" + fileMd5.substring(1, 2) + "/" + fileMd5 + "/" + "chunk" + "/";
+    }
+    private String getAbsoluteFilePath(String fileMd5, String extension) {
+        return fileMd5.substring(0, 1) + "/" + fileMd5.substring(1, 2) + "/" + fileMd5 + "/" + fileMd5 + extension;
     }
 
 
