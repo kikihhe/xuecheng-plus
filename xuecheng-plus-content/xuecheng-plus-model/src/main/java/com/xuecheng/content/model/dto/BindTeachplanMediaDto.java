@@ -25,7 +25,7 @@ public class BindTeachplanMediaDto {
      * 教学计划的id
      */
     @NotNull(message = "教学计划id不能为空")
-    private Long teachoplanId;
+    private Long teachplanId;
 
     /**
      * 文件名称

@@ -28,6 +28,7 @@ import java.util.Objects;
 public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan> implements TeachplanService {
     @Autowired
     private TeachplanMapper teachplanMapper;
+    @Autowired
     private TeachplanMediaMapper teachplanMediaMapper;
 
     @Override
@@ -80,7 +81,7 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
     public void associationMedia(BindTeachplanMediaDto dto) {
         // 根据教学计划id查询出该教学计划，如果没有，报错。
         // 如果教学计划不是二级菜单，不让绑定媒资
-        Long id = dto.getTeachoplanId();
+        Long id = dto.getTeachplanId();
         Teachplan teachplan = teachplanMapper.selectById(id);
         if (Objects.isNull(teachplan)) {
             throw new RuntimeException("该教学计划不存在");
