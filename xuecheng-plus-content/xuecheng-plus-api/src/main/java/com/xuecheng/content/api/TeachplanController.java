@@ -1,14 +1,16 @@
 package com.xuecheng.content.api;
 
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.servicce.TeachplanService;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -35,9 +37,22 @@ public class TeachplanController {
         return teachplanService.getTeachplanTree(courseId);
     }
 
+    /**
+     * 添加课程计划
+     * @param dto
+     */
     @PostMapping("/teachplan")
     public void saveTeachplan(@RequestBody SaveTeachplanDto dto) {
         teachplanService.saveTeachplan(dto);
+    }
+
+    /**
+     * 将媒资与教学计划绑定
+     * @param dto
+     */
+    @PostMapping("/teachplan/association/media")
+    public void associationMedia(@RequestBody @Validated BindTeachplanMediaDto dto) {
+        teachplanService.associationMedia(dto);
     }
 
 

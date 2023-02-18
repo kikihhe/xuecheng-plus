@@ -2,6 +2,7 @@ package com.xuecheng.servicce;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.model.po.Teachplan;
@@ -26,5 +27,7 @@ public interface TeachplanService extends IService<Teachplan> {
      *      NotNull: 修改章节/小结
      * @param dto
      */
-    public void saveTeachplan(SaveTeachplanDto dto) ;
+    public void saveTeachplan(SaveTeachplanDto dto);
+
+    public void associationMedia(BindTeachplanMediaDto dto);
 }
