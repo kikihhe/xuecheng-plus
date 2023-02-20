@@ -15,6 +15,6 @@ public class CourseCategoryTreeDto extends CourseCategory {
     /**
      * 本节点的所有子节点
      */
-    List childrenTreeNodes;
+    List  childrenTreeNodes;
 
 }

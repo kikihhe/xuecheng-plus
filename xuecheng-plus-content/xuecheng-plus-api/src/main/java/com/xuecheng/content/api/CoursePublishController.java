@@ -4,8 +4,7 @@ import com.xuecheng.content.model.dto.CoursePreviewDto;
 import com.xuecheng.servicce.CoursePublishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -18,6 +17,11 @@ public class CoursePublishController {
     @Autowired
     private CoursePublishService coursePublishService;
 
+    /**
+     * 预览课程
+     * @param courseId 需要预览的课程的id
+     * @return
+     */
     @GetMapping("/coursepreview/{courseId}")
     public ModelAndView preview(@PathVariable("courseId") Long courseId) {
         ModelAndView modelAndView = new ModelAndView();
@@ -27,4 +31,16 @@ public class CoursePublishController {
         modelAndView.setViewName("course_template");
         return modelAndView;
     }
+
+    /**
+     * 提交审核
+     * @param courseId 提交审核的课程的id
+     */
+    @ResponseBody
+    @PostMapping("/courseaudit/commit/{courseId}")
+    public void commitAudit(@PathVariable("courseId") Long courseId) {
+
+    }
+
+
 }
