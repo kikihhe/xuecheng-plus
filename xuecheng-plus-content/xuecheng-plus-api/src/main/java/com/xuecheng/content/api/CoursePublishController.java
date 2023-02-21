@@ -2,11 +2,16 @@ package com.xuecheng.content.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xuecheng.content.model.dto.CoursePreviewDto;
+import com.xuecheng.content.model.po.CoursePublishPre;
+import com.xuecheng.servicce.CoursePublishPreService;
 import com.xuecheng.servicce.CoursePublishService;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import java.util.Objects;
 
 /**
  * @author : 小何
@@ -17,6 +22,8 @@ import org.springframework.web.servlet.ModelAndView;
 public class CoursePublishController {
     @Autowired
     private CoursePublishService coursePublishService;
+    @Autowired
+    private CoursePublishPreService coursePublishPreService;
 
     /**
      * 预览课程
@@ -42,6 +49,36 @@ public class CoursePublishController {
     public void commitAudit(@PathVariable("courseId") Long courseId) throws JsonProcessingException {
         Long companyId = 1232141425L;
         coursePublishService.commitAudit(companyId, courseId);
+
+    }
+
+
+    /**
+     * 课程发布
+     * 使用本地事务将需要发布的课程写入 course_base 与 mq_message中
+     * course_base保证别人能在数据库中查到课程信息
+     * mq_message会被xxl-job扫描，执行 redis es minio 的缓存
+     * @param courseId
+     */
+    @ApiOperation("课程发布")
+    @ResponseBody
+    @PostMapping("/coursepublish/{courseId}")
+    public void coursePublish(@PathVariable("courseId") Long courseId) {
+
+        Long companyId = 1232141425L;
+        // 提交课程审核并且通过才能发布
+        CoursePublishPre coursePublishPre = coursePublishPreService.getById(courseId);
+        if (Objects.isNull(coursePublishPre)) {
+            throw new RuntimeException("请先提交课程审核，审核通过才能发布");
+        }
+        if (!"202004".equals(coursePublishPre.getStatus())) {
+            throw new RuntimeException("操作失败，课程正在审核");
+        }
+        // 本机构只能发布本机构的课程
+        if (!companyId.equals(coursePublishPre.getCompanyId())) {
+            throw new RuntimeException("本机构只能发布本机构的课程");
+        }
+        //
 
     }
 

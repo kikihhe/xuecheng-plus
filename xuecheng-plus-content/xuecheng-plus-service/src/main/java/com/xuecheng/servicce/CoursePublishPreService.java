@@ -9,4 +9,5 @@ import com.xuecheng.content.model.po.CoursePublishPre;
  * @date : 2023-02-21 12:57
  */
 public interface CoursePublishPreService extends IService<CoursePublishPre> {
+
 }

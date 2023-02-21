@@ -1,8 +1,10 @@
 package com.xuecheng.servicce;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xuecheng.content.model.dto.CoursePreviewDto;
+import com.xuecheng.content.model.po.CoursePublish;
 
 /**
  * @author : 小何
@@ -10,7 +12,7 @@ import com.xuecheng.content.model.dto.CoursePreviewDto;
  * @date : 2023-02-20 16:34
  */
 
-public interface CoursePublishService {
+public interface CoursePublishService extends IService<CoursePublish> {
     /**
      * 获取课程预览的基本信息
      * @param courseId 课程id
@@ -24,6 +26,8 @@ public interface CoursePublishService {
      * @param courseId
      */
     public void commitAudit(Long companyId, Long courseId) throws JsonProcessingException;
+
+    public void publish(Long companyId, Long courseId);
 
 
 }

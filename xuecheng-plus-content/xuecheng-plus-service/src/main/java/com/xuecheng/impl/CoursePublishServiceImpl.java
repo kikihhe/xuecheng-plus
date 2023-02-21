@@ -1,5 +1,6 @@
 package com.xuecheng.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
@@ -7,9 +8,11 @@ import com.xuecheng.content.model.dto.CoursePreviewDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.model.po.CourseMarket;
+import com.xuecheng.content.model.po.CoursePublish;
 import com.xuecheng.content.model.po.CoursePublishPre;
 import com.xuecheng.mapper.CourseBaseMapper;
 import com.xuecheng.mapper.CourseMarketMapper;
+import com.xuecheng.mapper.CoursePublishMapper;
 import com.xuecheng.mapper.CoursePublishPreMapper;
 import com.xuecheng.servicce.CourseBaseService;
 import com.xuecheng.servicce.CoursePublishService;
@@ -30,7 +33,7 @@ import java.util.Objects;
  */
 @Service
 @Transactional
-public class CoursePublishServiceImpl implements CoursePublishService {
+public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, CoursePublish> implements CoursePublishService {
     @Autowired
     private CourseBaseService courseBaseService;
 
@@ -45,6 +48,8 @@ public class CoursePublishServiceImpl implements CoursePublishService {
 
     @Autowired
     private CoursePublishPreMapper coursePublishPreMapper;
+    @Autowired
+    private CoursePublishMapper coursePublishMapper;
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId) {
@@ -110,6 +115,41 @@ public class CoursePublishServiceImpl implements CoursePublishService {
             coursePublishPreMapper.updateById(publishPre);
         }
 
+    }
+    public void publish(Long companyId, Long courseId) {
+        CoursePublishPre course = coursePublishPreMapper.selectById(courseId);
+        // 1. 将课程信息从预发布表插入到发布表
+        saveCoursePublish(course);
 
+
+
+        // 2. 将课程信息插入到mq_message表
+
+
+        // 3. 将课程信息从预发布表中删除
+
+    }
+
+    private void saveCoursePublish(CoursePublishPre course) {
+        CoursePublish cp = new CoursePublish();
+        BeanUtils.copyProperties(course, cp);
+        cp.setStatus("203002");
+        CoursePublish coursePublish = coursePublishMapper.selectById(course.getId());
+        // 如果已经发布，则更新; 如果未发布，就插入
+        if (Objects.isNull(coursePublish)) {
+            coursePublishMapper.insert(cp);
+        } else {
+            coursePublishMapper.updateById(cp);
+        }
+        // 更改课程基本信息中的发布状态
+        CourseBase courseBase = courseBaseMapper.selectById(cp.getId());
+        courseBase.setStatus("203002");// 已发布
+        courseBaseMapper.updateById(courseBase);
+    }
+    private void saveCoursePublishMessage(Long courseId) {
+
+    }
+    private void deleteCoursePublishPre(Long courseId) {
+        coursePublishPreMapper.deleteById(courseId);
     }
 }
