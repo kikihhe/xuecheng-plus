@@ -1,5 +1,6 @@
 package com.xuecheng.content.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xuecheng.content.model.dto.CoursePreviewDto;
 import com.xuecheng.servicce.CoursePublishService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,9 @@ public class CoursePublishController {
      */
     @ResponseBody
     @PostMapping("/courseaudit/commit/{courseId}")
-    public void commitAudit(@PathVariable("courseId") Long courseId) {
+    public void commitAudit(@PathVariable("courseId") Long courseId) throws JsonProcessingException {
+        Long companyId = 1232141425L;
+        coursePublishService.commitAudit(companyId, courseId);
 
     }
 

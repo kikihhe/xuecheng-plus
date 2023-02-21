@@ -10,6 +10,7 @@ import com.xuecheng.content.model.po.CourseMarket;
 import com.xuecheng.content.model.po.CoursePublishPre;
 import com.xuecheng.mapper.CourseBaseMapper;
 import com.xuecheng.mapper.CourseMarketMapper;
+import com.xuecheng.mapper.CoursePublishPreMapper;
 import com.xuecheng.servicce.CourseBaseService;
 import com.xuecheng.servicce.CoursePublishService;
 import com.xuecheng.servicce.TeachplanService;
@@ -41,6 +42,9 @@ public class CoursePublishServiceImpl implements CoursePublishService {
 
     @Autowired
     private CourseMarketMapper courseMarketMapper;
+
+    @Autowired
+    private CoursePublishPreMapper coursePublishPreMapper;
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId) {
@@ -96,6 +100,16 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         BeanUtils.copyProperties(info, publishPre);
         publishPre.setMarket(marketJson);
         publishPre.setTeachplan(treeJson);
+        publishPre.setStatus("202003"); // 状态为未审核
+
+        // 如果该数据正在预发布表中，说明之前已经提交审核,说明这次该修改了
+        CoursePublishPre publishPre1 = coursePublishPreMapper.selectById(courseId);
+        if (Objects.isNull(publishPre1)) {
+            coursePublishPreMapper.insert(publishPre);
+        } else {
+            coursePublishPreMapper.updateById(publishPre);
+        }
+
 
     }
 }
