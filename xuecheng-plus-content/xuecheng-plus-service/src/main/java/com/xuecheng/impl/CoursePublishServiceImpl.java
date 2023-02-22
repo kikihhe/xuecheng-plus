@@ -130,6 +130,7 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
 
     }
 
+    // 将课程信息从预发布表插入到发布表
     private void saveCoursePublish(CoursePublishPre course) {
         CoursePublish cp = new CoursePublish();
         BeanUtils.copyProperties(course, cp);
@@ -146,6 +147,7 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         courseBase.setStatus("203002");// 已发布
         courseBaseMapper.updateById(courseBase);
     }
+    // 将课程信息插入到mq_message表
     private void saveCoursePublishMessage(Long courseId) {
 
     }
