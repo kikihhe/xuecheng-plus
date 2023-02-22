@@ -3,8 +3,8 @@ package com.xuecheng.content.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xuecheng.content.model.dto.CoursePreviewDto;
 import com.xuecheng.content.model.po.CoursePublishPre;
-import com.xuecheng.servicce.CoursePublishPreService;
-import com.xuecheng.servicce.CoursePublishService;
+import com.xuecheng.content.servicce.CoursePublishPreService;
+import com.xuecheng.content.servicce.CoursePublishService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -79,6 +79,7 @@ public class CoursePublishController {
             throw new RuntimeException("本机构只能发布本机构的课程");
         }
         //
+        coursePublishService.publish(companyId, courseId);
 
     }
 

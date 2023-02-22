@@ -1,8 +1,8 @@
 package com.xuecheng.content.api;
 
 import com.xuecheng.content.model.dto.CoursePreviewDto;
-import com.xuecheng.servicce.CourseBaseService;
-import com.xuecheng.servicce.CoursePublishService;
+import com.xuecheng.content.servicce.CourseBaseService;
+import com.xuecheng.content.servicce.CoursePublishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

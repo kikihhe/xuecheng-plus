@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.xuecheng.mapper.TeachplanMapper">
+<mapper namespace="com.xuecheng.content.mapper.TeachplanMapper">
 
     <resultMap id="selectTreeNodesMap" type="com.xuecheng.content.model.dto.TeachplanDto">
         <id column="one_id" property="id"></id>
