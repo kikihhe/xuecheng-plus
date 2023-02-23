@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xuecheng.content.model.dto.CoursePreviewDto;
 import com.xuecheng.content.model.po.CoursePublish;
+import com.xuecheng.messagesdk.model.po.MqMessage;
 
 import java.io.File;
 
@@ -50,6 +51,8 @@ public interface CoursePublishService extends IService<CoursePublish> {
      * @return void
      */
     public void  uploadCourseHtml(Long courseId,File file);
+
+    public void saveCourseIndex(String courseId);
 
 
 }

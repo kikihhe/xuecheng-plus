@@ -1,6 +1,7 @@
 package com.xuecheng.content.impl;
 import com.xuecheng.content.config.MultipartSupportConfig;
 import com.xuecheng.content.feignclient.MediaServiceClient;
+import com.xuecheng.content.feignclient.SearchServiceClient;
 import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.mapper.CourseMarketMapper;
 import com.xuecheng.content.mapper.CoursePublishMapper;
@@ -9,6 +10,7 @@ import com.xuecheng.content.servicce.CourseBaseService;
 import com.xuecheng.messagesdk.mapper.MqMessageMapper;
 import com.xuecheng.messagesdk.service.MqMessageHistoryService;
 import com.xuecheng.messagesdk.service.impl.MqMessageServiceImpl;
+import com.xuecheng.search.po.CourseIndex;
 import freemarker.template.Configuration;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -52,6 +54,7 @@ import java.util.Objects;
 @Service
 @Transactional
 public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, CoursePublish> implements CoursePublishService {
+
     @Autowired
     private CourseBaseService courseBaseService;
 
@@ -65,18 +68,23 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     private CourseMarketMapper courseMarketMapper;
 
     @Autowired
+    private CoursePublishMapper coursePublishMapper;
+    @Autowired
     private CoursePublishPreMapper coursePublishPreMapper;
 
     @Autowired
-    private CoursePublishMapper coursePublishMapper;
+    private MediaServiceClient mediaServiceClient;
+
+    @Autowired
+    private SearchServiceClient searchServiceClient;
 
 
 
     @Autowired
     private MqMessageService mqMessageService;
 
-    @Autowired
-    private MediaServiceClient mediaServiceClient;
+
+
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId) {
@@ -247,5 +255,22 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     private int deleteCoursePublishPre(Long courseId) {
         int i = coursePublishPreMapper.deleteById(courseId);
         return i;
+    }
+
+
+    /**
+     * 将课程上传至es
+     * @param courseId
+     */
+    public void saveCourseIndex(String courseId) {
+        CoursePublish coursePublish = coursePublishMapper.selectById(courseId);
+        CourseIndex courseIndex = new CourseIndex();
+
+        BeanUtils.copyProperties(coursePublish, courseIndex);
+        Boolean add = searchServiceClient.add(courseIndex);
+
+        if (!add) {
+            throw new RuntimeException("课程索引创建失败");
+        }
     }
 }

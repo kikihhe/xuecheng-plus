@@ -53,6 +53,7 @@ public class CoursePublishTask extends MessageProcessAbstract {
         generateCourseHtml(mqMessage, Long.parseLong(mqMessage.getBusinessKey1()));
 
         // 将课程信息存储到es
+        saveCourseIndex(mqMessage, mqMessage.getBusinessKey1());
 
         // 将课程信息存储到redis
 
@@ -61,9 +62,32 @@ public class CoursePublishTask extends MessageProcessAbstract {
         return true;
     }
 
+    /**
+     * 创建课程索引，es
+     * @param mqMessage
+     * @param courseId
+     */
+    private void saveCourseIndex(MqMessage mqMessage, String courseId) {
+        Long id = mqMessage.getId();
+        int stageTwo = this.getMqMessageService().getStageTwo(id);
+        if (stageTwo > 0) {
+            log.debug("当前阶段是创建课程索引, 已经完成，不在处理。任务信息: {}", mqMessage);
+            return ;
+        }
+
+        // 创建索引
+        coursePublishService.saveCourseIndex(courseId);
+
+
+
+        // 完成第二个阶段
+        this.getMqMessageService().completedStageTwo(id);
+    }
+
     public void generateCourseHtml(MqMessage mqMessage, Long courseId) {
+        Long id = mqMessage.getId();
         // 先判断任务是否已经完成
-        int stageOne = this.getMqMessageService().getStageOne(courseId);
+        int stageOne = this.getMqMessageService().getStageOne(id);
         if (stageOne > 0) {
             log.debug("上传静态页面任务已完成, 无需重复");
             return ;
