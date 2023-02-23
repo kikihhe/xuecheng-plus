@@ -6,6 +6,9 @@ import com.xuecheng.content.mapper.CourseMarketMapper;
 import com.xuecheng.content.mapper.CoursePublishMapper;
 import com.xuecheng.content.mapper.CoursePublishPreMapper;
 import com.xuecheng.content.servicce.CourseBaseService;
+import com.xuecheng.messagesdk.mapper.MqMessageMapper;
+import com.xuecheng.messagesdk.service.MqMessageHistoryService;
+import com.xuecheng.messagesdk.service.impl.MqMessageServiceImpl;
 import freemarker.template.Configuration;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -63,8 +66,11 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
 
     @Autowired
     private CoursePublishPreMapper coursePublishPreMapper;
+
     @Autowired
     private CoursePublishMapper coursePublishMapper;
+
+
 
     @Autowired
     private MqMessageService mqMessageService;

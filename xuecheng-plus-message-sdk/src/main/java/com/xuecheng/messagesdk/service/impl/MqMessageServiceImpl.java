@@ -10,10 +10,12 @@ import com.xuecheng.messagesdk.service.MqMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -110,22 +112,46 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
 
     @Override
     public int getStageOne(long id) {
-        return Integer.parseInt(mqMessageMapper.selectById(id).getStageState1());
+        LambdaQueryWrapper<MqMessage> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(MqMessage::getBusinessKey1, id);
+        MqMessage mqMessage = mqMessageMapper.selectOne(lambdaQueryWrapper);
+        if (Objects.isNull(mqMessage)) {
+            throw new RuntimeException();
+        }
+        return Integer.parseInt(mqMessage.getStageState1());
     }
 
     @Override
     public int getStageTwo(long id) {
-        return Integer.parseInt(mqMessageMapper.selectById(id).getStageState2());
+        LambdaQueryWrapper<MqMessage> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(MqMessage::getBusinessKey1, id);
+        MqMessage mqMessage = mqMessageMapper.selectOne(lambdaQueryWrapper);
+        if (Objects.isNull(mqMessage)) {
+            throw new RuntimeException();
+        }
+        return Integer.parseInt(mqMessage.getStageState2());
     }
 
     @Override
     public int getStageThree(long id) {
-        return Integer.parseInt(mqMessageMapper.selectById(id).getStageState3());
+        LambdaQueryWrapper<MqMessage> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(MqMessage::getBusinessKey1, id);
+        MqMessage mqMessage = mqMessageMapper.selectOne(lambdaQueryWrapper);
+        if (Objects.isNull(mqMessage)) {
+            throw new RuntimeException();
+        }
+        return Integer.parseInt(mqMessage.getStageState3());
     }
 
     @Override
     public int getStageFour(long id) {
-        return Integer.parseInt(mqMessageMapper.selectById(id).getStageState4());
+        LambdaQueryWrapper<MqMessage> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(MqMessage::getBusinessKey1, id);
+        MqMessage mqMessage = mqMessageMapper.selectOne(lambdaQueryWrapper);
+        if (Objects.isNull(mqMessage)) {
+            throw new RuntimeException();
+        }
+        return Integer.parseInt(mqMessage.getStageState4());
     }
 
 
