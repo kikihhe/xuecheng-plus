@@ -26,7 +26,7 @@ public class DaoAuthenticationProviderCustom extends DaoAuthenticationProvider {
  }
 
 
- //不再校验密码
+ //不再让security比对密码, 我们自己在UserDetailsServiceImpl中比对
  protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
 
  }

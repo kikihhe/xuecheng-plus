@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xuecheng.ucenter.mapper.XcUserMapper;
+import com.xuecheng.ucenter.model.dto.AuthParamsDto;
+import com.xuecheng.ucenter.model.dto.XcUserExt;
 import com.xuecheng.ucenter.model.po.XcUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,22 +24,46 @@ import java.util.Objects;
  */
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
-    @Autowired
-    private XcUserMapper userMapper;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+
+    // 密码模式登录
+    private PasswordAuthServiceImpl passwordAuthService;
+
+    @Autowired
+    public UserDetailsServiceImpl(PasswordAuthServiceImpl passwordAuthService) {
+        this.passwordAuthService = passwordAuthService;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        LambdaQueryWrapper<XcUser> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(XcUser::getUsername, s);
-
-        XcUser xcUser = userMapper.selectOne(lambdaQueryWrapper);
-        if (Objects.isNull(xcUser)) {
-            throw new UsernameNotFoundException("账号/密码错误!");
+        AuthParamsDto authParamsDto = null;
+        try {
+            authParamsDto = objectMapper.readValue(s, AuthParamsDto.class);
+            if (Objects.isNull(authParamsDto)) {
+                throw new RuntimeException("输入信息格式错误");
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
 
-        // 如果从数据库中查到了用户，拿到密码交给security
-        String password = xcUser.getPassword();
+        String authType = authParamsDto.getAuthType();
+        UserDetails userDetails = null;
+        if ("password".equals(authType)) {
+            XcUserExt xcUser = passwordAuthService.execute(authParamsDto);
+            // 如果从数据库中查到了用户，拿到密码交给security
+            userDetails = creatUserDetails(xcUser);
+
+        } else if ("".equals(authType)) {
+            return null;
+        }
+
+
+        return userDetails;
+    }
+
+    private UserDetails creatUserDetails(XcUserExt xcUser) {
         String[] authorities = {"test"};
         xcUser.setPassword(null);
         String userJson = null;
@@ -47,6 +73,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             e.printStackTrace();
         }
         // 将用户的信息以json的格式存入username, 以后用的时候解析即可。
-        return User.withUsername(userJson).password(password).authorities(authorities).build();
+        return User.withUsername(userJson).password("").authorities(authorities).build();
     }
+
 }

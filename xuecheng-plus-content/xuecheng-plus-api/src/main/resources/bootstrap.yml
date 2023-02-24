@@ -1,0 +1,48 @@
+# 微服务配置, 名称可被其他服务调用
+spring:
+  application:
+    name: content-api
+  cloud:
+    nacos:
+      server-addr: 192.168.101.65:8848
+      discovery:
+        namespace: ${spring.profiles.active}
+        group: xuecheng-plus-project
+      config:
+        file-extension: yaml
+        namespace: ${spring.profiles.active}
+        group: xuecheng-plus-project
+        refresh-enabled: true
+#        依赖于content-service这个微服务的数据库配置
+        extension-configs:
+          - data-id: content-service-${spring.profiles.active}.yaml
+            refresh: true
+            group: xuecheng-plus-project
+#            共享配置
+        shared-configs:
+#          - 1. 共享swagger配置
+          - dataId: swagger-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true
+#          - 2. 共享logging配置
+          - dataId: logging-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true
+#          - 3. 共享freemarker配置
+          - dataId: freemarker-config-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true
+#          - 4. feign配置
+          - data-id: feign-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true
+          - data-id: search-${spring.profiles.active}.yaml
+            group: xuecheng-plus-project
+            refresh: true
+  profiles:
+    active: dev
+  main:
+    allow-bean-definition-overriding: true
+
+
+
