@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -30,6 +31,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     // 密码模式登录
     private PasswordAuthServiceImpl passwordAuthService;
+
+    private WXAuthServiceImpl wxAuthService;
 
     @Autowired
     public UserDetailsServiceImpl(PasswordAuthServiceImpl passwordAuthService) {
@@ -55,8 +58,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             // 如果从数据库中查到了用户，拿到密码交给security
             userDetails = creatUserDetails(xcUser);
 
-        } else if ("".equals(authType)) {
-            return null;
+        } else if ("wxLogin".equals(authType)) {
+            XcUserExt execute = wxAuthService.execute(authParamsDto);
+            userDetails = creatUserDetails(execute);
         }
 
 
