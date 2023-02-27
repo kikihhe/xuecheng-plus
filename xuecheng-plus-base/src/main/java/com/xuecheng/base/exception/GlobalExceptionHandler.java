@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 /**
@@ -15,18 +16,25 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public RestErrorResponse doException(Exception e) {
+        String message = e.getMessage();
+        log.error("异常类: {}", e);
+        log.error("异常信息: {}",message);
+        return new RestErrorResponse(message);
+    }
 
 
-//
-//
-//    @ExceptionHandler(RuntimeException.class)
-//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-//    public RestErrorResponse doRuntimeException(RuntimeException e) {
-//        String message = e.getMessage();
-//        log.error("异常类: {}", e);
-//        log.error("异常信息: {}",message);
-//        return new RestErrorResponse(message);
-//    }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public RestErrorResponse doRuntimeException(RuntimeException e) {
+        String message = e.getMessage();
+        log.error("异常类: {}", e);
+        log.error("异常信息: {}",message);
+        return new RestErrorResponse(message);
+    }
 
     /**
      * 捕获参数校验产生的bug，例如参数为空、参数不符合要求
@@ -47,6 +55,13 @@ public class GlobalExceptionHandler {
         });
 
         return new RestErrorResponse(errors.toString());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public RestErrorResponse doAccessDeniedException(AccessDeniedException e) {
+        String message = "老毕等，想访问这借口你配吗";
+        return new RestErrorResponse(message);
     }
 
 }

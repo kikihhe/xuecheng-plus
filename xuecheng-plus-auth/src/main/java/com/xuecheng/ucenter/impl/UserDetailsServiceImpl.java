@@ -3,9 +3,11 @@ package com.xuecheng.ucenter.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xuecheng.ucenter.mapper.XcMenuMapper;
 import com.xuecheng.ucenter.mapper.XcUserMapper;
 import com.xuecheng.ucenter.model.dto.AuthParamsDto;
 import com.xuecheng.ucenter.model.dto.XcUserExt;
+import com.xuecheng.ucenter.model.po.XcMenu;
 import com.xuecheng.ucenter.model.po.XcUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,10 +40,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     private WXAuthServiceImpl wxAuthService;
 
+    private XcMenuMapper xcMenuMapper;
+
     @Autowired
-    public UserDetailsServiceImpl(PasswordAuthServiceImpl passwordAuthService, WXAuthServiceImpl wxAuthService) {
+    public UserDetailsServiceImpl(PasswordAuthServiceImpl passwordAuthService, WXAuthServiceImpl wxAuthService, XcMenuMapper xcMenuMapper) {
         this.passwordAuthService = passwordAuthService;
         this.wxAuthService = wxAuthService;
+        this.xcMenuMapper = xcMenuMapper;
     }
 
     @Override
@@ -71,8 +78,20 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     private UserDetails creatUserDetails(XcUserExt xcUser) {
-        String[] authorities = {"test"};
+        // 获取用户权限, 从List转为String[]
+        List<XcMenu> xcMenus = xcMenuMapper.selectPermissionByUserId(xcUser.getId());
+        ArrayList<String> authoritiesList = new ArrayList<>();
+
+        xcMenus.forEach(menu -> {
+            authoritiesList.add(menu.getCode());
+        });
+        String[] authorities = null;
+        if (authoritiesList.size() <= 0) {
+            authorities = authoritiesList.toArray(new String[0]);
+        }
+        // 将用户密码置空
         xcUser.setPassword(null);
+        // 将用户信息转为json
         String userJson = null;
         try {
             userJson = new ObjectMapper().writeValueAsString(xcUser);
