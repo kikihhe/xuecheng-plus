@@ -33,6 +33,7 @@ public class WXLoginController {
         } else {
             // 重定向到登陆界面，自动登录
             String username = xcUser.getUsername();
+//              return "redirect:http://www.xuecheng-plus.com/sign.html?username="+username+"&authType=wx";
             return "redirect:http://www.xuecheng-plus.com/sign.html?username="+username+"&authType=wx";
         }
 

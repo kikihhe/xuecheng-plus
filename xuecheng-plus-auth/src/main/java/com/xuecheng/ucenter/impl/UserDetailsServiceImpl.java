@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
@@ -24,6 +25,7 @@ import java.util.Objects;
  * @date : 2023-02-23 20:45
  */
 @Service
+@Transactional
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -35,8 +37,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private WXAuthServiceImpl wxAuthService;
 
     @Autowired
-    public UserDetailsServiceImpl(PasswordAuthServiceImpl passwordAuthService) {
+    public UserDetailsServiceImpl(PasswordAuthServiceImpl passwordAuthService, WXAuthServiceImpl wxAuthService) {
         this.passwordAuthService = passwordAuthService;
+        this.wxAuthService = wxAuthService;
     }
 
     @Override
@@ -58,7 +61,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             // 如果从数据库中查到了用户，拿到密码交给security
             userDetails = creatUserDetails(xcUser);
 
-        } else if ("wxLogin".equals(authType)) {
+        } else if ("wx".equals(authType)) {
             XcUserExt execute = wxAuthService.execute(authParamsDto);
             userDetails = creatUserDetails(execute);
         }

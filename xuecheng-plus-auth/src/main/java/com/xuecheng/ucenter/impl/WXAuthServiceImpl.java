@@ -1,5 +1,6 @@
 package com.xuecheng.ucenter.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -31,6 +33,7 @@ import java.util.UUID;
  */
 @Service
 @Slf4j
+@Transactional
 public class WXAuthServiceImpl implements AuthService {
 
     @Value("${weixin.appid}")
@@ -73,7 +76,9 @@ public class WXAuthServiceImpl implements AuthService {
         // 拿到map, map中有用户信息
         Map map = objectMapper.readValue(exchange1.getBody(), Map.class);
         String unionid = (String) map.get("unionid");
-        XcUser xcUser = userMapper.selectOne(new LambdaQueryChainWrapper<>(userMapper).eq(XcUser::getWxUnionid, unionid));
+        LambdaQueryWrapper<XcUser> wrapper1 = new LambdaQueryWrapper<>();
+        wrapper1.eq(XcUser::getWxUnionid, unionid);
+        XcUser xcUser = userMapper.selectOne(wrapper1);
         // 如果数据库中存在对应wxunionid的用户，说明已经登陆过，不是第一次登录。可以直接返回
         if (!Objects.isNull(xcUser)) {
             return xcUser;
@@ -95,6 +100,7 @@ public class WXAuthServiceImpl implements AuthService {
             log.error("微信用户入库失败");
             throw new RuntimeException("登录失败");
         }
+        // 插入角色表
         XcUserRole xcUserRole = new XcUserRole();
         xcUserRole.setId(UUID.randomUUID().toString());
         xcUserRole.setUserId(unionid);
@@ -117,7 +123,9 @@ public class WXAuthServiceImpl implements AuthService {
     public XcUserExt execute(AuthParamsDto authParamsDto) {
         // 如果用户存在，wxlogincontroller会调用根据username的自动登录
         String username = authParamsDto.getUsername();
-        XcUser xcUser = userMapper.selectOne(new LambdaQueryChainWrapper<>(userMapper).eq(XcUser::getUsername, username));
+        LambdaQueryWrapper<XcUser> wrapper =  new LambdaQueryWrapper<>();
+        wrapper.eq(XcUser::getUsername, username);
+        XcUser xcUser = userMapper.selectOne(wrapper);
         if (Objects.isNull(xcUser)) {
             throw new RuntimeException("用户不存在!");
         }
