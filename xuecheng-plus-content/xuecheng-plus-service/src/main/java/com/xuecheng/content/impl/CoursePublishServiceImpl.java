@@ -273,4 +273,9 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
             throw new RuntimeException("课程索引创建失败");
         }
     }
+
+    @Override
+    public CoursePublish getCoursePublish(Long courseId) {
+        return coursePublishMapper.selectById(courseId);
+    }
 }

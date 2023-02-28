@@ -35,9 +35,9 @@ public class CourseBaseInfoController {
      */
     @ApiOperation("课程查询接口")
     @PostMapping("/course/list")
+//    @PreAuthorize("hasAuthority('course_find_list')")
     public PageResult<CourseBase> list(@RequestBody QueryCourseParamsDto queryCourseParamsDto,
                                        PageParams params) {
-
         return courseBaseService.queryCourseBaseList(params, queryCourseParamsDto);
 
     }

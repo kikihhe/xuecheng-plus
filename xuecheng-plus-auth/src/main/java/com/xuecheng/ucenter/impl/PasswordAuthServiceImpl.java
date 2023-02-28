@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -72,7 +73,7 @@ public class PasswordAuthServiceImpl implements AuthService {
         boolean matches = passwordEncoder.matches(inputPassword, truePassword);
 
         if (!matches) {
-            throw new UsernameNotFoundException("账号或密码错误!");
+            throw new RuntimeException("账号或密码错误!");
         }
         // 到这里就成功认证
         XcUserExt xcUserExt = new XcUserExt();
@@ -81,4 +82,7 @@ public class PasswordAuthServiceImpl implements AuthService {
 
     }
 
+    public static void main(String[] args) {
+        System.out.println(new BCryptPasswordEncoder().encode("11111"));
+    }
 }

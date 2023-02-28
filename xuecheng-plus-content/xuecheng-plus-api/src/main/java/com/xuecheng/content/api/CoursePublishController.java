@@ -2,6 +2,7 @@ package com.xuecheng.content.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xuecheng.content.model.dto.CoursePreviewDto;
+import com.xuecheng.content.model.po.CoursePublish;
 import com.xuecheng.content.model.po.CoursePublishPre;
 import com.xuecheng.content.servicce.CoursePublishPreService;
 import com.xuecheng.content.servicce.CoursePublishService;
@@ -81,6 +82,14 @@ public class CoursePublishController {
         //
         coursePublishService.publish(companyId, courseId);
 
+    }
+
+    @ResponseBody
+    @GetMapping("/r/coursepublish/{courseId}")
+    public CoursePublish getCoursePublish(@PathVariable("courseId") Long courseId) {
+        // 查询相应课程的发布信息
+        coursePublishService.getCoursePublish(courseId);
+        return null;
     }
 
 

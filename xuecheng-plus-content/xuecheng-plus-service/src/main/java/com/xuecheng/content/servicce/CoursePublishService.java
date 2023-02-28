@@ -55,4 +55,7 @@ public interface CoursePublishService extends IService<CoursePublish> {
     public void saveCourseIndex(String courseId);
 
 
+    public CoursePublish getCoursePublish(Long courseId);
+
+
 }
