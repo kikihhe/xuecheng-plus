@@ -28,12 +28,16 @@ import java.util.Objects;
 @Service
 public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage> implements MqMessageService {
 
-    @Autowired
+
     MqMessageMapper mqMessageMapper;
 
-    @Autowired
-    MqMessageHistoryMapper mqMessageHistoryMapper;
 
+    MqMessageHistoryMapper mqMessageHistoryMapper;
+    @Autowired
+    public MqMessageServiceImpl(MqMessageMapper mqMessageMapper, MqMessageHistoryMapper mqMessageHistoryMapper) {
+        this.mqMessageMapper = mqMessageMapper;
+        this.mqMessageHistoryMapper = mqMessageHistoryMapper;
+    }
 
     @Override
     public List<MqMessage> getMessageList(int shardIndex, int shardTotal, String messageType,int count) {

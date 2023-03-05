@@ -84,12 +84,12 @@ public class CoursePublishController {
 
     }
 
+    // 此方法只提供给learning微服务调用
     @ResponseBody
     @GetMapping("/r/coursepublish/{courseId}")
     public CoursePublish getCoursePublish(@PathVariable("courseId") Long courseId) {
         // 查询相应课程的发布信息
-        coursePublishService.getCoursePublish(courseId);
-        return null;
+        return coursePublishService.getCoursePublish(courseId);
     }
 
 

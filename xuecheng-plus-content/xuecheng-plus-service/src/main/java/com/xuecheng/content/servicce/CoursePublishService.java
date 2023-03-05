@@ -55,7 +55,15 @@ public interface CoursePublishService extends IService<CoursePublish> {
     public void saveCourseIndex(String courseId);
 
 
+    /**
+     * 获取课程发布信息，此方法只提供给learning微服务调用
+     * @param courseId
+     * @return
+     */
     public CoursePublish getCoursePublish(Long courseId);
+
+
+
 
 
 }
