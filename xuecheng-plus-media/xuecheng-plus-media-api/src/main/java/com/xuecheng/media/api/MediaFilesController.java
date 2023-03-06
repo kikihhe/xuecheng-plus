@@ -120,5 +120,4 @@ public class MediaFilesController {
 
         return RestResponse.success(url);
     }
-
 }

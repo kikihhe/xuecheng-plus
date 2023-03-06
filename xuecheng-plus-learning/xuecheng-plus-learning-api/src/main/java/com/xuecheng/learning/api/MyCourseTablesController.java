@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
+import java.util.Objects;
 
 
 /**
@@ -47,6 +47,17 @@ public class MyCourseTablesController {
         XcChooseCourseDto xcChooseCourseDto = myCourseTablesService.addChooseCourse(userId, courseId);
         return xcChooseCourseDto;
 
+    }
+
+    @PostMapping("/choosecourse/learnstatus/{courseId}")
+    public XcCourseTablesDto getLearningStatus(@PathVariable("courseId") Long courseId) {
+        // 查看当前登录状态。如果没有登陆，禁止学习
+        SecurityUtil.XcUser user = SecurityUtil.getUser();
+        if (Objects.isNull(user)) {
+            throw new RuntimeException("请先登录");
+        }
+        XcCourseTablesDto learningStatus = myCourseTablesService.getLearningStatus(user.getId(), courseId);
+        return learningStatus;
     }
 
 

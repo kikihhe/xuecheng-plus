@@ -7,6 +7,7 @@ import com.xuecheng.ucenter.model.dto.AuthParamsDto;
 import com.xuecheng.ucenter.model.dto.XcUserExt;
 import com.xuecheng.ucenter.model.po.XcMenu;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -81,6 +82,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         });
         String[] authorities = null;
         if (authoritiesList.size() <= 0) {
+            authorities = authoritiesList.toArray(new String[0]);
+        } else {
             authorities = authoritiesList.toArray(new String[0]);
         }
         // 将用户密码置空

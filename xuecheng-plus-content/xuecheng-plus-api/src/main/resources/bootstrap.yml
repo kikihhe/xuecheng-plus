@@ -24,10 +24,10 @@ spring:
           - dataId: swagger-${spring.profiles.active}.yaml
             group: xuecheng-plus-common
             refresh: true
-#          - 2. 共享logging配置
-          - dataId: logging-${spring.profiles.active}.yaml
-            group: xuecheng-plus-common
-            refresh: true
+##          - 2. 共享logging配置
+#          - dataId: logging-${spring.profiles.active}.yaml
+#            group: xuecheng-plus-common
+#            refresh: true
 #          - 3. 共享freemarker配置
           - dataId: freemarker-config-${spring.profiles.active}.yaml
             group: xuecheng-plus-common

@@ -76,7 +76,7 @@ public class CoursePublishTask extends MessageProcessAbstract {
         }
 
         // 创建索引
-        coursePublishService.saveCourseIndex(courseId);
+//        coursePublishService.saveCourseIndex(courseId);
 
 
 

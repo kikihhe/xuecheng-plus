@@ -52,7 +52,7 @@ public interface CoursePublishService extends IService<CoursePublish> {
      */
     public void  uploadCourseHtml(Long courseId,File file);
 
-    public void saveCourseIndex(String courseId);
+//    public void saveCourseIndex(String courseId);
 
 
     /**
